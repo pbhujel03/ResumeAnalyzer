@@ -37,7 +37,7 @@ def chunk_text(text, max_length = 300):
     if current_chunk:
         chunks.append(" ".join(current_chunk))
 
-return chunks
+    return chunks
 
 
     
