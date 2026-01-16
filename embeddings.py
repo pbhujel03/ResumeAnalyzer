@@ -1,7 +1,4 @@
 from sentence_transformers import SentenceTransformer
-from textUtils import extract_text, chunk_text
-import numpy as np
-from resumeApp import resume_file, job_file 
 
 #load the embeddings
 model= SentenceTransformer("all-MiniLM-L6-v2")

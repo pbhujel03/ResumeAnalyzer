@@ -28,4 +28,39 @@ def compare_embeddings(resume_embeddings, job_embeddings):
                 "score": score
             })
 
-return scores
+    return scores
+
+def sort_scores(scores):
+    return sorted(scores, key= lambda x: x["score"],reverse=True)
+
+#pick top matches
+def get_top_matches(sorted_scores, top_k = 5):
+    return sorted_scores[:top_k]
+
+#compute overall match percentage
+def compute_match_percentage(top_matches):
+    if not top_matches:
+        return 0
+    
+    avg_score = sum(item["score"] for item in top_matches)/len(top_matches)
+    return round(avg_score *100, 2)
+
+def explain_result(match_percentage):
+    if match_percentage >= 80:
+        return "Excellent Match! Your resume aligns very well with this job"
+    elif match_percentage >= 60:
+        return "Good Match. Adding more relevant projects can improve your chances"
+    elif match_percentage >= 40:
+        return "Average match. Consider improving skills mentioned in the job Description "
+    else:
+        return "Low match. Your resume needs significant improvements for the role"
+
+def suggest_improvements(resume_text, job_text):
+    resume_words = set(resume_text.lower().split())
+    job_words = set(job_text.lower().split())
+
+    missing = job_words - resume_words
+
+    important = [w for w in missing if len(w)>4]
+    return important[:5]
+
