@@ -1,4 +1,6 @@
 from sentence_transformers import SentenceTransformer
+import faiss
+import numpy as np
 
 #load the embeddings
 model= SentenceTransformer("all-MiniLM-L6-v2")
@@ -9,20 +11,24 @@ def create_embeddings(chunks):
     """
     return model.encode(chunks,convert_to_numpy=True)
 
-# if __name__ == "__main__":
-#     resume_text = extract_text(resume_file)
-#     job_text = extract_text(job_file)
+def build_faiss_index(embeddings):
+    """
+    Create Faiss Index from embeddings
+    """
+    dimension = embeddings.shape[1]
+    index = faiss.IndexFlatL2(dimension)
+    index.add(embeddings)
+    return index
+    
+def search_faiss(index, query_embeddings, top_k = 5):
+    """
+    Search FAISS index from closest Vectors
+    """    
+    distances, indices = index.search(query_embeddings, top_k)
+    return distances, indices
 
-#     resume_chunks = chunk_text(resume_text, max_length=20)
-#     job_chunks = chunk_text(job_text, max_length=20)
 
-#     print("Resume Chunbks:", resume_chunks)
-#     print("Job Chunks:",job_chunks)
 
-#     resume_embeddings = create_embeddings(resume_chunks)
-#     job_embeddings = create_embeddings(job_chunks)
 
-#     print("Resume Embeddings Shape:",resume_embeddings.shape)
-#     print("Job Embeddings Shape:",job_embeddings.shape)
 
 

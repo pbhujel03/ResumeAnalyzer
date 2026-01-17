@@ -1,15 +1,9 @@
 import streamlit as st
-
+import faiss
+import numpy as np
 from textUtils import extract_text, chunk_text
-from embeddings import create_embeddings
-from similarity import (
-    compare_embeddings,
-    sort_scores,
-    get_top_matches,
-    compute_match_percentage,
-    explain_result,
-    suggest_improvements
-)
+from embeddings import create_embeddings, build_faiss_index, search_faiss 
+import ollama
 
 st.title("Resume Analyzer")
 
@@ -27,26 +21,41 @@ if resume_file and job_file:
     resume_embeddings = create_embeddings(resume_chunks)
     job_embeddings = create_embeddings(job_chunks)
 
-    #compare similarity
-    scores = compare_embeddings(resume_embeddings, job_embeddings)
-    sorted_scores = sort_scores(scores)
-    top_matches = get_top_matches(sorted_scores)
+    job_index = build_faiss_index(job_embeddings)
+    distances, indices = search_faiss(job_index, resume_embeddings, top_k = 1)
 
-    #final score
-    match_percentage = compute_match_percentage(top_matches)
-    explanation = explain_result(match_percentage)
+    #compute match percentage
+    top_scores = [1- d/2 for d in distances.flatten()]
+    match_percentage = round(np.mean(top_scores)* 100,2)
 
-    #suggestions
-    improvements = suggest_improvements(resume_text, job_text)
+    #LLM explanation using Ollama
+    prompt = f"""
+    I have a resume and a job description.
+    The resume match percentage is {match_percentage}%.
+    Resume: {resume_text}
+    job Description: {job_text}
+    
+
+    Explain in a clear way:
+    1. why this resume matches the job.
+    2. what improvements can be made to better match the job.
+    """
+
+    response = ollama.chat(
+        model="llama3",
+        messages=[{"role": "user", "content": prompt}]
+    )
+    llm_response = response["message"]["content"]
+
 
     #Display results
     st.subheader(f"Match Percentage: {match_percentage}%")
-    st.write(explanation)
+    # explanation = explain_result(match_percentage)
+    # st.write(explanation)
 
-    if improvements:
-        st.subheader("Suggestions to Improve:")
-        for skill in improvements:
-            st.write(f"- {skill}")
+    st.subheader("LLM explanation:")
+    st.write(llm_response)
+    
 
 
 
